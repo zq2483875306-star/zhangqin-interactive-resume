@@ -259,7 +259,7 @@
       const site = document.getElementById('site');
       const root = document.getElementById('content-root');
       const toast = document.getElementById('toast');
-      const defaults = { html: {}, order: [], layout: 'default', accent: '#ff5e55', avatar: '张钦证件照_v02.jpeg' };
+      const defaults = { html: {}, order: [], layout: 'default', accent: '#ff5e55', avatar: '慷慨激昂.png' };
       document.querySelectorAll('[data-editable]').forEach(el => { defaults.html[el.dataset.editable] = el.innerHTML; });
       defaults.order = Array.from(root.querySelectorAll('[data-section]')).map(el => el.dataset.section);
       let state = JSON.parse(JSON.stringify(defaults));
