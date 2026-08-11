@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="张钦的可编辑交互式职业简历">
+  <title>张钦｜互动职业档案</title>
+  <style>
+    :root {
+      --ink: #102823;
+      --paper: #f8f2e7;
+      --paper-glass: rgba(255, 250, 239, .68);
+      --coral: #ff5e55;
+      --yellow: #ffd447;
+      --cyan: #28c7d6;
+      --lime: #a4e85a;
+      --pink: #ff6397;
+      --muted: rgba(16, 40, 35, .67);
+      --line: rgba(16, 40, 35, .18);
+      --radius: 24px;
+      --display: "Songti SC", "STSong", "Noto Serif SC", serif;
+      --body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: #e9dfcd; font-family: var(--body); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+    a { color: inherit; }
+    .page-progress { position: fixed; z-index: 50; top: 0; left: 0; width: 0; height: 5px; background: var(--coral); transition: width .12s linear; }
+    .site { position: relative; overflow: clip; background: var(--paper); }
+    .site::before, .site::after { position: fixed; z-index: 0; pointer-events: none; content: ""; }
+    .site::before { width: 40vw; height: 40vw; top: 12vh; right: -16vw; background: repeating-linear-gradient(45deg, var(--yellow) 0 16px, transparent 16px 32px); opacity: .52; transform: rotate(12deg); }
+    .site::after { width: 28vw; height: 28vw; bottom: 7vh; left: -11vw; border: 38px solid var(--pink); opacity: .22; transform: rotate(-16deg); }
+    .canvas { position: relative; z-index: 1; width: min(1460px, calc(100% - 34px)); margin: 0 auto; }
+    .topbar { position: sticky; z-index: 30; top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: 14px 0 0; border: 1px solid rgba(255,255,255,.7); border-radius: 17px; padding: 10px 12px 10px 18px; background: rgba(248, 242, 231, .78); box-shadow: 0 8px 22px rgba(16,40,35,.09); backdrop-filter: blur(16px); }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: max-content; font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+    .brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; color: var(--ink); background: var(--yellow); font-family: var(--display); font-size: 21px; }
+    .nav { display: flex; align-items: center; justify-content: center; gap: 17px; overflow: auto; scrollbar-width: none; }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav a { padding: 4px 0; color: var(--muted); font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; border-bottom: 2px solid transparent; }
+    .nav a.active { color: var(--ink); border-color: var(--coral); }
+    .toolbox { display: flex; flex-wrap: wrap; justify-content: end; gap: 7px; }
+    .tool { min-height: 34px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; color: var(--ink); background: rgba(255,255,255,.44); font-size: 12px; font-weight: 800; white-space: nowrap; transition: transform .18s ease, background-color .18s ease; }
+    .tool:hover { transform: translateY(-2px); background: var(--yellow); }
+    .tool.primary { border-color: var(--ink); color: var(--paper); background: var(--ink); }
+    .tool.primary:hover { color: var(--ink); background: var(--cyan); }
+    .hero { display: grid; grid-template-columns: 1.13fr .87fr; gap: 30px; min-height: 690px; padding: 72px 0 54px; }
+    .hero-copy { display: flex; flex-direction: column; justify-content: end; padding: 34px 0 45px 5%; }
+    .eyebrow { display: inline-flex; align-items: center; width: fit-content; gap: 8px; margin: 0 0 17px; font-size: 12px; font-weight: 800; letter-spacing: .14em; }
+    .eyebrow::before { width: 14px; height: 14px; content: ""; background: var(--coral); transform: rotate(45deg); }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 680px; margin-bottom: 20px; font-family: var(--display); font-size: clamp(72px, 12vw, 158px); font-weight: 700; letter-spacing: .05em; line-height: .82; }
+    .headline { max-width: 570px; margin-bottom: 26px; font-size: clamp(18px, 2.1vw, 27px); font-weight: 800; line-height: 1.5; }
+    .headline span { padding: 1px 7px; background: var(--cyan); }
+    .intro { max-width: 600px; margin-bottom: 30px; color: var(--muted); font-size: 15px; line-height: 1.85; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .hero-actions a { display: inline-flex; align-items: center; min-height: 43px; border: 1px solid var(--ink); border-radius: 12px; padding: 0 15px; font-size: 14px; font-weight: 800; text-decoration: none; }
+    .hero-actions a:first-child { color: var(--paper); background: var(--ink); }
+    .hero-actions a:last-child { background: var(--lime); }
+    .hero-visual { position: relative; display: grid; place-items: center; min-height: 510px; }
+    .hero-visual::before { position: absolute; width: 82%; height: 79%; border-radius: 38px; content: ""; background: var(--cyan); transform: rotate(4deg); }
+    .hero-visual::after { position: absolute; z-index: 0; width: 65%; height: 66%; border: 18px solid var(--pink); content: ""; transform: rotate(-10deg) translate(-24%, 6%); }
+    .avatar-shell { position: relative; z-index: 2; width: min(74%, 380px); aspect-ratio: .83; overflow: hidden; border: 12px solid rgba(248,242,231,.9); border-radius: 160px 160px 22px 22px; background: var(--ink); box-shadow: 17px 18px 0 var(--yellow); transform: rotate(-2deg); }
+    .avatar-shell img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+    .avatar-label { position: absolute; z-index: 3; right: 8%; bottom: 8%; padding: 11px 13px; color: var(--paper); background: var(--ink); font-size: 12px; font-weight: 800; letter-spacing: .07em; transform: rotate(3deg); }
+    .avatar-label b { color: var(--yellow); }
+    .section { position: relative; scroll-margin-top: 90px; padding: 72px 5%; }
+    .section-heading { display: grid; grid-template-columns: 80px 1fr minmax(180px, 330px); gap: 22px; align-items: end; margin-bottom: 32px; }
+    .section-number { color: var(--coral); font-family: var(--display); font-size: 58px; font-weight: 700; line-height: .8; }
+    .section h2 { margin-bottom: 0; font-family: var(--display); font-size: clamp(36px, 5vw, 62px); font-weight: 700; letter-spacing: .04em; line-height: .92; }
+    .section-summary { margin-bottom: 3px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .glass { border: 1px solid rgba(255,255,255,.85); background: var(--paper-glass); box-shadow: 0 14px 35px rgba(16,40,35,.08); backdrop-filter: blur(14px); }
+    .metrics { display: grid; grid-template-columns: 1.3fr .9fr 1fr .8fr; gap: 13px; }
+    .metric { position: relative; min-height: 220px; overflow: hidden; border-radius: var(--radius); padding: 24px; }
+    .metric:nth-child(1) { background: var(--coral); }
+    .metric:nth-child(2) { background: var(--yellow); }
+    .metric:nth-child(3) { background: var(--cyan); }
+    .metric:nth-child(4) { background: var(--lime); }
+    .metric::after { position: absolute; right: -18px; bottom: -45px; width: 128px; height: 128px; border: 16px solid rgba(255,255,255,.4); border-radius: 50%; content: ""; }
+    .metric strong { display: block; position: relative; z-index: 1; margin-top: 55px; font-family: var(--display); font-size: clamp(46px, 5.1vw, 76px); line-height: .8; }
+    .metric span { position: relative; z-index: 1; display: block; margin-top: 14px; font-size: 14px; font-weight: 800; }
+    .metric small { position: relative; z-index: 1; display: block; margin-top: 5px; font-size: 12px; font-weight: 700; opacity: .74; }
+    .journey { display: grid; gap: 12px; }
+    .experience { display: grid; grid-template-columns: 144px 1fr 105px; gap: 24px; align-items: start; border-radius: 18px; padding: 23px; transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
+    .experience:hover { box-shadow: 0 18px 34px rgba(16,40,35,.12); transform: translateX(6px); }
+    .experience.is-muted { opacity: .26; }
+    .experience time { color: var(--coral); font-size: 13px; font-weight: 900; letter-spacing: .04em; }
+    .experience h3 { margin-bottom: 4px; font-size: 20px; }
+    .experience p { margin-bottom: 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
+    .experience .open-detail { width: 98px; min-height: 38px; border: 1px solid var(--ink); border-radius: 10px; background: rgba(255,255,255,.35); font-size: 12px; font-weight: 800; }
+    .experience .open-detail:hover { background: var(--pink); }
+    .projects { display: grid; grid-template-columns: 1.1fr .9fr .9fr; gap: 15px; }
+    .project { position: relative; min-height: 285px; overflow: hidden; border-radius: var(--radius); padding: 26px; color: var(--ink); transition: transform .2s ease; }
+    .project:hover { transform: translateY(-6px) rotate(-.5deg); }
+    .project:nth-child(1) { background: var(--pink); }
+    .project:nth-child(2) { background: var(--lime); }
+    .project:nth-child(3) { background: var(--yellow); }
+    .project:nth-child(4) { background: var(--cyan); }
+    .project:nth-child(5) { background: #ffd9bf; }
+    .project:nth-child(6) { background: #a7d9cf; }
+    .project::before { position: absolute; top: 17px; right: 18px; width: 42px; height: 42px; border: 3px solid var(--ink); border-radius: 50%; content: ""; }
+    .project h3 { position: relative; z-index: 1; max-width: 260px; margin-top: 70px; margin-bottom: 8px; font-family: var(--display); font-size: 30px; line-height: 1.04; }
+    .project p { position: relative; z-index: 1; max-width: 290px; margin-bottom: 16px; font-size: 14px; font-weight: 700; line-height: 1.7; }
+    .project button { position: relative; z-index: 1; min-height: 34px; border: 0; border-bottom: 2px solid var(--ink); padding: 0; color: var(--ink); background: transparent; font-size: 13px; font-weight: 900; }
+    .skills-grid { display: grid; grid-template-columns: .78fr 1.22fr; gap: 24px; align-items: stretch; }
+    .skills-side { border-radius: var(--radius); padding: 27px; background: var(--ink); color: var(--paper); }
+    .skills-side h3 { margin-bottom: 14px; color: var(--yellow); font-family: var(--display); font-size: 29px; }
+    .skills-side p { margin-bottom: 22px; color: rgba(248,242,231,.77); font-size: 14px; line-height: 1.85; }
+    .equipment { display: flex; flex-wrap: wrap; gap: 8px; }
+    .equipment span { border: 1px solid rgba(248,242,231,.42); border-radius: 8px; padding: 6px 9px; font-size: 12px; font-weight: 700; }
+    .skills-panel { border-radius: var(--radius); padding: 25px; }
+    .filter-note { margin-bottom: 17px; color: var(--muted); font-size: 13px; }
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+    .skill { min-height: 43px; border: 1px solid var(--line); border-radius: 12px; padding: 0 13px; background: rgba(255,255,255,.45); font-size: 14px; font-weight: 800; transition: transform .18s ease, background .18s ease; }
+    .skill:hover, .skill.selected { transform: translateY(-3px); background: var(--yellow); }
+    .skill:nth-child(3n + 2):hover, .skill:nth-child(3n + 2).selected { background: var(--cyan); }
+    .skill:nth-child(3n):hover, .skill:nth-child(3n).selected { background: var(--pink); }
+    .education { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .education-card { min-height: 260px; border-radius: var(--radius); padding: 28px; }
+    .education-card:first-child { background: var(--yellow); }
+    .education-card:last-child { color: var(--paper); background: var(--ink); }
+    .education-card .date { display: inline-block; margin-bottom: 48px; font-size: 12px; font-weight: 900; letter-spacing: .08em; }
+    .education-card h3 { margin-bottom: 10px; font-family: var(--display); font-size: 32px; }
+    .education-card p { max-width: 470px; margin-bottom: 0; font-size: 14px; line-height: 1.8; }
+    .contact { display: flex; align-items: end; justify-content: space-between; gap: 24px; border-radius: 30px 30px 0 0; padding: 58px 6%; color: var(--paper); background: var(--ink); }
+    .contact h2 { max-width: 750px; margin-bottom: 17px; color: var(--paper); font-family: var(--display); font-size: clamp(43px, 6.3vw, 92px); line-height: .93; }
+    .contact h2 span { color: var(--yellow); }
+    .contact p { margin-bottom: 0; color: rgba(248,242,231,.75); font-size: 15px; }
+    .contact-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: end; }
+    .contact-actions button, .contact-actions a { display: inline-flex; align-items: center; min-height: 44px; border: 1px solid var(--paper); border-radius: 11px; padding: 0 14px; color: var(--paper); background: transparent; font-size: 13px; font-weight: 800; text-decoration: none; }
+    .contact-actions button:hover { color: var(--ink); background: var(--yellow); }
+    .edit-panel, .detail-drawer { position: fixed; z-index: 80; top: 0; right: 0; width: min(390px, 92vw); height: 100dvh; overflow: auto; padding: 22px; color: var(--ink); background: rgba(248,242,231,.96); box-shadow: -18px 0 38px rgba(16,40,35,.18); backdrop-filter: blur(18px); transform: translateX(105%); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+    .edit-panel.open, .detail-drawer.open { transform: translateX(0); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-family: var(--display); font-size: 30px; }
+    .close-panel { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 10px; background: transparent; font-size: 20px; }
+    .editor-group { padding: 20px 0; border-bottom: 1px solid var(--line); }
+    .editor-group h3 { margin-bottom: 11px; font-size: 15px; }
+    .editor-group p { color: var(--muted); font-size: 12px; line-height: 1.65; }
+    .layout-options, .palette-options { display: flex; flex-wrap: wrap; gap: 8px; }
+    .option { min-height: 35px; border: 1px solid var(--line); border-radius: 9px; padding: 0 10px; background: white; font-size: 12px; font-weight: 800; }
+    .option.active { color: var(--ink); background: var(--yellow); }
+    .swatch { width: 38px; height: 38px; border: 3px solid transparent; border-radius: 10px; }
+    .swatch.active { border-color: var(--ink); }
+    .sort-list { display: grid; gap: 8px; }
+    .sort-row { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; border-radius: 10px; padding: 8px; background: rgba(16,40,35,.07); font-size: 12px; font-weight: 800; }
+    .sort-row button { width: 29px; height: 29px; border: 0; border-radius: 7px; background: white; font-weight: 900; }
+    .panel-action { min-height: 39px; width: 100%; margin-top: 8px; border: 1px solid var(--ink); border-radius: 10px; background: transparent; font-size: 13px; font-weight: 800; }
+    .panel-action.warn { border-color: var(--coral); color: var(--coral); }
+    .edit-mode [data-editable] { outline: 2px dashed rgba(255,94,85,.66); outline-offset: 4px; border-radius: 4px; cursor: text; }
+    .edit-mode [data-editable]:focus { outline-color: var(--cyan); background: rgba(255,255,255,.65); }
+    .edit-mode .open-detail, .edit-mode .project button { pointer-events: none; opacity: .42; }
+    .layout-timeline .projects { grid-template-columns: 1fr; }
+    .layout-timeline .project { min-height: 170px; display: grid; grid-template-columns: 1.1fr 1.4fr auto; align-items: center; gap: 18px; }
+    .layout-timeline .project h3 { margin: 0; }
+    .layout-timeline .project p { margin: 0; }
+    .layout-timeline .project::before { top: calc(50% - 19px); }
+    .layout-compact .projects { grid-template-columns: repeat(2, 1fr); }
+    .layout-compact .project { min-height: 220px; }
+    .status-toast { position: fixed; z-index: 120; bottom: 22px; left: 50%; max-width: calc(100% - 36px); border-radius: 12px; padding: 11px 15px; color: var(--paper); background: var(--ink); box-shadow: 0 10px 25px rgba(16,40,35,.22); font-size: 13px; font-weight: 700; opacity: 0; transform: translate(-50%, 16px); pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+    .status-toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .64s ease, transform .64s cubic-bezier(.2,.8,.2,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @media (max-width: 980px) { .topbar { align-items: flex-start; flex-wrap: wrap; } .nav { order: 3; width: 100%; justify-content: start; } .hero { grid-template-columns: 1fr; min-height: 0; padding-top: 38px; } .hero-copy { padding-left: 0; } .hero-visual { min-height: 480px; } .metrics { grid-template-columns: repeat(2, 1fr); } .projects { grid-template-columns: 1fr 1fr; } .section-heading { grid-template-columns: 65px 1fr; } .section-summary { grid-column: 2; } }
+    @media (max-width: 680px) { .canvas { width: min(100% - 20px, 1460px); } .topbar { top: 8px; margin-top: 8px; padding: 9px; border-radius: 14px; } .brand { font-size: 11px; } .toolbox { gap: 5px; } .tool { min-height: 32px; padding: 0 8px; font-size: 11px; } .hero { gap: 0; padding: 38px 5px 28px; } .hero-copy { padding: 25px 0; } h1 { font-size: clamp(66px, 21vw, 104px); } .hero-visual { min-height: 365px; } .avatar-shell { width: 67%; border-width: 8px; } .section { padding: 52px 1%; } .section-heading { grid-template-columns: 48px 1fr; gap: 12px; margin-bottom: 24px; } .section-number { font-size: 40px; } .section-summary { grid-column: 1 / -1; } .metrics { gap: 9px; } .metric { min-height: 165px; padding: 16px; border-radius: 17px; } .metric strong { margin-top: 42px; font-size: 44px; } .metric span { margin-top: 10px; font-size: 12px; } .metric small { font-size: 10px; } .experience { grid-template-columns: 1fr; gap: 8px; padding: 18px; } .experience .open-detail { width: 100%; } .projects, .layout-compact .projects { grid-template-columns: 1fr; } .project { min-height: 235px; } .layout-timeline .project { display: block; min-height: 230px; } .layout-timeline .project h3 { margin-top: 64px; } .layout-timeline .project p { margin-top: 8px; } .skills-grid, .education { grid-template-columns: 1fr; } .contact { align-items: start; flex-direction: column; padding: 45px 7%; } .contact-actions { justify-content: start; } .edit-panel, .detail-drawer { width: 100%; height: min(79dvh, 690px); top: auto; bottom: 0; border-radius: 24px 24px 0 0; transform: translateY(105%); } .edit-panel.open, .detail-drawer.open { transform: translateY(0); } }
+    @media print { .topbar, .page-progress, .edit-panel, .detail-drawer, .status-toast, .site::before, .site::after, .open-detail, .project button { display: none !important; } body { background: white; } .canvas { width: 100%; } .hero { min-height: 430px; } .section { padding: 34px 5%; } .reveal { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+  <div class="page-progress" aria-hidden="true"></div>
+  <div class="site" id="site">
+    <div class="canvas">
+      <header class="topbar" aria-label="页面导航与编辑工具">
+        <div class="brand"><span class="brand-mark">钦</span>ZHANG QIN / PROFILE</div>
+        <nav class="nav" aria-label="页面章节">
+          <a href="#home" class="active">首页</a><a href="#results">成果</a><a href="#journey">经历</a><a href="#projects">项目</a><a href="#skills">能力</a><a href="#contact">联系</a>
+        </nav>
+        <div class="toolbox">
+          <label class="tool" for="avatar-input">替换头像</label><input id="avatar-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <button class="tool primary" id="edit-toggle" type="button">编辑模式</button>
+          <button class="tool" id="layout-toggle" type="button">版式设置</button>
+          <button class="tool" id="print-button" type="button">打印 / PDF</button>
+        </div>
+      </header>
+
+      <main id="content-root">
+        <section class="hero" id="home" data-section="home">
+          <div class="hero-copy reveal">
+            <p class="eyebrow" data-editable="eyebrow">销售 · 主播 · 内容运营</p>
+            <h1 data-editable="name">张钦</h1>
+            <p class="headline" data-editable="headline">把镜头前的表达力，变成<span>可量化的销售结果</span>。</p>
+            <p class="intro" data-editable="intro">我拥有销售、直播、视频创作和服务行业经验，熟悉从内容策划、外出踩盘拍摄到直播间应变与客户沟通的完整流程。面对新任务能快速学习，也愿意用真实结果证明执行能力。</p>
+            <div class="hero-actions"><a href="tel:18389327929" data-editable="phone">电话：183 8932 7929</a><a href="#journey">查看职业经历</a></div>
+          </div>
+          <div class="hero-visual reveal" aria-label="张钦头像">
+            <div class="avatar-shell"><img id="avatar-image" src="data:image/jpeg;base64,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" alt="张钦一寸头像"></div>
+            <div class="avatar-label"><b>OPEN</b> TO WORK<br>海南 / 可外出拍摄</div>
+          </div>
+        </section>
+
+        <section class="section reveal" id="results" data-section="results">
+          <div class="section-heading"><div class="section-number">01</div><h2>结果，不只是一串数字。</h2><p class="section-summary" data-editable="results-summary">从酒店订房、餐饮运营到内容账号和房产直播，持续将沟通、内容与成交连接起来。</p></div>
+          <div class="metrics">
+            <article class="metric"><strong data-counter="30" data-suffix="万+">30万+</strong><span data-editable="metric1-title">亚特兰蒂斯订房业绩</span><small data-editable="metric1-note">管家岗位 / 2023 - 2024</small></article>
+            <article class="metric"><strong data-counter="30" data-suffix="万">30万</strong><span data-editable="metric2-title">门店单月营业额</span><small data-editable="metric2-note">直播与视频拍摄推动</small></article>
+            <article class="metric"><strong data-counter="3000" data-suffix="+">3000+</strong><span data-editable="metric3-title">校园账号粉丝</span><small data-editable="metric3-note">拥有百万播放视频</small></article>
+            <article class="metric"><strong data-counter="200" data-prefix="近">近200</strong><span data-editable="metric4-title">直播最高自然在线</span><small data-editable="metric4-note">海南阿汤哥说房</small></article>
+          </div>
+        </section>
+
+        <section class="section reveal" id="journey" data-section="journey">
+          <div class="section-heading"><div class="section-number">02</div><h2>把每个现场，当作一次成交。</h2><p class="section-summary">点击每段经历，查看具体职责、成果与可补充的作品证明。</p></div>
+          <div class="journey">
+            <article class="experience glass" data-skills="直播,视频创作,客户沟通" data-detail-title="海南阿汤哥说房" data-detail-subtitle="近期直播实践" data-detail="近期参与房产直播，最高自然在线人数接近 200 人。具备直播间表达、观众互动、内容临场调整和客户沟通经验。"><time data-editable="job1-date">近期</time><div><h3 data-editable="job1-title">主播 / 房产直播执行</h3><p data-editable="job1-description">参与“海南阿汤哥说房”直播，以纯自然流量实现最高近 200 人在线，持续磨练镜头表达与直播应变能力。</p></div><button class="open-detail" type="button">查看详情</button></article>
+            <article class="experience glass" data-skills="销售,客户沟通,内容运营" data-detail-title="姜海岩烤牛肋条畅吃" data-detail-subtitle="直播与门店运营 / 2025.05 - 06" data-detail="通过直播和视频拍摄参与门店运营，将内容传播与经营目标结合，实现当月 30 万元营业额。"><time data-editable="job2-date">2025.05 - 06</time><div><h3 data-editable="job2-title">直播与视频执行 / 门店运营</h3><p data-editable="job2-description">通过直播和视频拍摄，为姜海岩烤牛肋条畅吃实现当月 30 万元营业额。</p></div><button class="open-detail" type="button">查看详情</button></article>
+            <article class="experience glass" data-skills="销售,客户沟通,现场应变" data-detail-title="三亚亚特兰蒂斯酒店" data-detail-subtitle="管家 / 2023 - 2024" data-detail="在高标准服务场景中负责客户接待与沟通，获得良好评价，并完成 30 多万元订房业绩。"><time data-editable="job3-date">2023 - 2024</time><div><h3 data-editable="job3-title">管家 / 服务与订房销售</h3><p data-editable="job3-description">在三亚亚特兰蒂斯酒店担任管家，客户反馈良好，完成 30 多万元订房业绩。</p></div><button class="open-detail" type="button">查看详情</button></article>
+            <article class="experience glass" data-skills="客户沟通,现场应变,销售" data-detail-title="博鳌亚洲论坛" data-detail-subtitle="优秀志愿者 / 2022" data-detail="参与博鳌亚洲论坛服务，在云亭近距离服务李强总理等多位国家领导人。该内容依据用户提供简历编排。"><time data-editable="job4-date">2022</time><div><h3 data-editable="job4-title">博鳌亚洲论坛志愿服务</h3><p data-editable="job4-description">在云亭近距离服务李强总理等多位国家领导人，获得博鳌亚洲论坛“优秀志愿者”荣誉。</p></div><button class="open-detail" type="button">查看详情</button></article>
+          </div>
+        </section>
+
+        <section class="section reveal" id="projects" data-section="projects">
+          <div class="section-heading"><div class="section-number">03</div><h2>内容是入口，转化是答案。</h2><p class="section-summary">点击项目卡片查看相关内容；编辑模式下可直接改写标题和说明。</p></div>
+          <div class="projects">
+            <article class="project" data-skills="视频创作,内容运营,销售" data-detail-title="夸拾代盒饭" data-detail-subtitle="校园餐饮内容运营 / 2024.09 - 10" data-detail="通过校园内容传播与门店推广，将夸拾代盒饭做到校内第一。"><h3 data-editable="project1-title">校内第一的盒饭店</h3><p data-editable="project1-description">2024 年 9 - 10 月，将夸拾代盒饭做到校内第一。</p><button type="button">项目详情</button></article>
+            <article class="project" data-skills="视频创作,直播,内容运营" data-detail-title="三院小v" data-detail-subtitle="校园个人账号" data-detail="个人校园账号累计 3000+ 粉丝，拥有百万播放视频，具备从选题到拍摄剪辑的内容实践经验。"><h3 data-editable="project2-title">三院小v</h3><p data-editable="project2-description">3000+ 粉丝、百万播放视频，持续做校园内容创作。</p><button type="button">项目详情</button></article>
+            <article class="project" data-skills="直播,客户沟通,现场应变" data-detail-title="直播实战" data-detail-subtitle="自然流直播场景" data-detail="拥有丰富直播经验，能够面对突发状况并保持镜头前从容表达。"><h3 data-editable="project3-title">镜头前从容表达</h3><p data-editable="project3-description">熟悉直播流程，能处理互动、节奏与直播现场突发情况。</p><button type="button">项目详情</button></article>
+            <article class="project" data-skills="销售,客户沟通" data-detail-title="房产内容与直播" data-detail-subtitle="房产直播方向" data-detail="结合外出踩盘、短视频拍摄与直播，为房产内容与客户沟通提供支持。"><h3 data-editable="project4-title">把踩盘做成内容</h3><p data-editable="project4-description">接受外出踩盘拍摄，用内容辅助客户了解房源与决策。</p><button type="button">项目详情</button></article>
+            <article class="project" data-skills="客户沟通,销售,现场应变" data-detail-title="服务型销售" data-detail-subtitle="酒店服务经历" data-detail="酒店管家经历训练了高要求服务意识、面对客户的沟通能力和现场问题解决能力。"><h3 data-editable="project5-title">服务，是销售的底气</h3><p data-editable="project5-description">高标准服务经历，让客户沟通更有分寸和执行力。</p><button type="button">项目详情</button></article>
+            <article class="project" data-skills="视频创作,内容运营,直播" data-detail-title="持续学习" data-detail-subtitle="个人成长方式" data-detail="能接受新事物，愿意持续学习对自己有帮助的新知识，在内容创作中保持更新。"><h3 data-editable="project6-title">保持更新</h3><p data-editable="project6-description">持续学习内容、直播与销售方法，快速进入新场景。</p><button type="button">项目详情</button></article>
+          </div>
+        </section>
+
+        <section class="section reveal" id="skills" data-section="skills">
+          <div class="section-heading"><div class="section-number">04</div><h2>能拍、能播、能卖，也能解决问题。</h2><p class="section-summary">点击能力标签，高亮与它关联的经历和项目；再次点击恢复全部内容。</p></div>
+          <div class="skills-grid">
+            <aside class="skills-side"><h3 data-editable="skills-title">我的现场装备</h3><p data-editable="skills-copy">内容生产有设备，服务和销售有沟通力。愿意外出拍摄，也能在直播现场解决临时问题。</p><div class="equipment"><span>DJI Pocket 3</span><span>DJI Action 4</span><span>索尼相机</span><span>直播设备</span></div></aside>
+            <div class="skills-panel glass"><p class="filter-note" id="filter-note">选择一项能力，查看对应实践。</p><div class="skill-tags"><button class="skill" type="button" data-skill="销售">销售转化</button><button class="skill" type="button" data-skill="直播">直播执行</button><button class="skill" type="button" data-skill="视频创作">视频创作</button><button class="skill" type="button" data-skill="内容运营">内容运营</button><button class="skill" type="button" data-skill="客户沟通">客户沟通</button><button class="skill" type="button" data-skill="现场应变">现场应变</button></div></div>
+          </div>
+        </section>
+
+        <section class="section reveal" data-section="education">
+          <div class="section-heading"><div class="section-number">05</div><h2>经历沉淀为，下一次出发。</h2><p class="section-summary">国家级项目与大型会议服务经历，塑造了服务意识、现场礼仪与成长心态。</p></div>
+          <div class="education"><article class="education-card"><span class="date" data-editable="education-date">2021 - 2025</span><h3 data-editable="education-title">三亚学院</h3><p data-editable="education-copy">在校期间参与国家级项目“旅投杯”，获得特等奖；持续关注服务、内容与商业实践。</p></article><article class="education-card"><span class="date" data-editable="honor-date">荣誉与信念</span><h3 data-editable="honor-title">优秀志愿者</h3><p data-editable="honor-copy">获得博鳌亚洲论坛“优秀志愿者”荣誉。相信“学无止境，勇攀高峰”。</p></article></div>
+        </section>
+      </main>
+    </div>
+    <footer class="contact" id="contact" data-section="contact"><div><h2 data-editable="contact-title">期待把下一次<br><span>好结果</span>做出来。</h2><p data-editable="contact-copy">求职方向：销售 / 主播 / 内容运营 · 籍贯：海南 · 团员</p></div><div class="contact-actions"><a href="tel:18389327929" data-editable="contact-phone">183 8932 7929</a><button id="copy-phone" type="button">复制电话</button></div></footer>
+  </div>
+
+  <aside class="edit-panel" id="edit-panel" aria-label="版式设置"><div class="panel-head"><h2>版式设置</h2><button class="close-panel" type="button" data-close="edit-panel">×</button></div><div class="editor-group"><h3>内容版式</h3><p>切换经历与项目的表现方式。</p><div class="layout-options"><button class="option active" type="button" data-layout="default">彩色拼贴</button><button class="option" type="button" data-layout="timeline">横向叙事</button><button class="option" type="button" data-layout="compact">紧凑网格</button></div></div><div class="editor-group"><h3>主强调色</h3><p>选择一个颜色，立即改变页面强调色。</p><div class="palette-options"><button class="swatch active" type="button" style="background:#ff5e55" data-color="#ff5e55" aria-label="珊瑚红"></button><button class="swatch" type="button" style="background:#28c7d6" data-color="#28c7d6" aria-label="青蓝"></button><button class="swatch" type="button" style="background:#ff6397" data-color="#ff6397" aria-label="玫红"></button><button class="swatch" type="button" style="background:#a4e85a" data-color="#78b737" aria-label="草绿"></button></div></div><div class="editor-group"><h3>模块排序</h3><p>使用箭头调整主要内容区域顺序。</p><div class="sort-list" id="sort-list"></div></div><div class="editor-group"><h3>数据管理</h3><button class="panel-action" id="export-data" type="button">导出编辑数据 JSON</button><button class="panel-action warn" id="reset-data" type="button">恢复初始内容</button></div></aside>
+  <aside class="detail-drawer" id="detail-drawer" aria-label="经历与项目详情"><div class="panel-head"><h2 id="detail-title">详情</h2><button class="close-panel" type="button" data-close="detail-drawer">×</button></div><p id="detail-subtitle" style="margin-top:20px;color:var(--coral);font-size:13px;font-weight:800"></p><p id="detail-copy" style="font-size:16px;line-height:1.9"></p><p style="margin-top:28px;color:var(--muted);font-size:12px">可在编辑模式中直接修改页面文字；此详情卡会显示当前简历记录。</p></aside>
+  <div class="status-toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const storageKey = 'zhangqin-interactive-resume-v02';
+      const site = document.getElementById('site');
+      const root = document.getElementById('content-root');
+      const toast = document.getElementById('toast');
+      const defaults = { html: {}, order: [], layout: 'default', accent: '#ff5e55', avatar: '张钦证件照_v02.jpeg' };
+      document.querySelectorAll('[data-editable]').forEach(el => { defaults.html[el.dataset.editable] = el.innerHTML; });
+      defaults.order = Array.from(root.querySelectorAll('[data-section]')).map(el => el.dataset.section);
+      let state = JSON.parse(JSON.stringify(defaults));
+      let editMode = false;
+      let toastTimer;
+      const showToast = message => { toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2600); };
+      const save = () => { try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { showToast('浏览器无法保存本次编辑，请使用导出 JSON'); } };
+      const restore = () => { try { const saved = JSON.parse(localStorage.getItem(storageKey)); if (saved) state = { ...defaults, ...saved, html: { ...defaults.html, ...saved.html } }; } catch { localStorage.removeItem(storageKey); } };
+      const applyState = () => {
+        document.querySelectorAll('[data-editable]').forEach(el => { el.innerHTML = state.html[el.dataset.editable] ?? defaults.html[el.dataset.editable]; });
+        document.documentElement.style.setProperty('--coral', state.accent);
+        document.getElementById('avatar-image').src = state.avatar || defaults.avatar;
+        site.classList.remove('layout-timeline', 'layout-compact'); if (state.layout !== 'default') site.classList.add(`layout-${state.layout}`);
+        state.order.forEach(key => { const section = root.querySelector(`[data-section="${key}"]`); if (section) root.appendChild(section); });
+        document.querySelectorAll('[data-layout]').forEach(button => button.classList.toggle('active', button.dataset.layout === state.layout));
+        document.querySelectorAll('.swatch').forEach(button => button.classList.toggle('active', button.dataset.color === state.accent));
+        renderSortList();
+      };
+      const persistEditable = el => { state.html[el.dataset.editable] = el.innerHTML; save(); };
+      const setEditMode = enabled => {
+        editMode = enabled; site.classList.toggle('edit-mode', enabled);
+        document.querySelectorAll('[data-editable]').forEach(el => { el.contentEditable = enabled ? 'true' : 'false'; el.spellcheck = false; });
+        document.getElementById('edit-toggle').textContent = enabled ? '完成编辑' : '编辑模式';
+        if (enabled) showToast('编辑模式已开启：点击虚线文字直接修改'); else showToast('编辑已保存到当前浏览器');
+      };
+      const renderSortList = () => {
+        const labels = { results: '成果数字墙', journey: '工作经历', projects: '项目展示', skills: '能力标签', education: '教育荣誉' };
+        const list = document.getElementById('sort-list'); list.innerHTML = '';
+        state.order.filter(key => labels[key]).forEach((key, index) => { const row = document.createElement('div'); row.className = 'sort-row'; row.innerHTML = `<span>${labels[key]}</span><button type="button" data-move="up" data-key="${key}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-move="down" data-key="${key}" ${index === state.order.filter(k => labels[k]).length - 1 ? 'disabled' : ''}>↓</button>`; list.appendChild(row); });
+      };
+      const moveSection = (key, direction) => { const index = state.order.indexOf(key); const target = index + direction; if (index < 0 || target < 0 || target >= state.order.length) return; [state.order[index], state.order[target]] = [state.order[target], state.order[index]]; applyState(); save(); };
+      restore(); applyState();
+      document.getElementById('edit-toggle').addEventListener('click', () => setEditMode(!editMode));
+      document.getElementById('layout-toggle').addEventListener('click', () => document.getElementById('edit-panel').classList.add('open'));
+      document.getElementById('print-button').addEventListener('click', () => window.print());
+      document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => document.getElementById(button.dataset.close).classList.remove('open')));
+      document.querySelectorAll('[data-editable]').forEach(el => el.addEventListener('input', () => persistEditable(el)));
+      document.querySelectorAll('[data-layout]').forEach(button => button.addEventListener('click', () => { state.layout = button.dataset.layout; applyState(); save(); showToast('版式已更新'); }));
+      document.querySelectorAll('.swatch').forEach(button => button.addEventListener('click', () => { state.accent = button.dataset.color; applyState(); save(); showToast('强调色已更新'); }));
+      document.getElementById('sort-list').addEventListener('click', event => { const button = event.target.closest('[data-move]'); if (button) moveSection(button.dataset.key, button.dataset.move === 'up' ? -1 : 1); });
+      document.getElementById('avatar-input').addEventListener('change', event => { const file = event.target.files?.[0]; if (!file) return; if (!['image/jpeg','image/png','image/webp'].includes(file.type)) { showToast('请使用 JPG、PNG 或 WEBP 图片'); return; } if (file.size > 3 * 1024 * 1024) { showToast('图片请控制在 3MB 以内'); return; } const reader = new FileReader(); reader.onload = () => { state.avatar = reader.result; document.getElementById('avatar-image').src = reader.result; save(); showToast('头像已替换并自动保存'); }; reader.readAsDataURL(file); });
+      const openDetail = source => { if (editMode) return; document.getElementById('detail-title').textContent = source.dataset.detailTitle || '详情'; document.getElementById('detail-subtitle').textContent = source.dataset.detailSubtitle || ''; document.getElementById('detail-copy').textContent = source.dataset.detail || ''; document.getElementById('detail-drawer').classList.add('open'); };
+      document.querySelectorAll('.open-detail, .project button').forEach(button => button.addEventListener('click', () => openDetail(button.closest('[data-detail-title]'))));
+      let activeSkill = '';
+      document.querySelectorAll('.skill').forEach(button => button.addEventListener('click', () => { activeSkill = activeSkill === button.dataset.skill ? '' : button.dataset.skill; document.querySelectorAll('.skill').forEach(item => item.classList.toggle('selected', item.dataset.skill === activeSkill)); document.querySelectorAll('[data-skills]').forEach(item => item.classList.toggle('is-muted', Boolean(activeSkill) && !item.dataset.skills.includes(activeSkill))); document.getElementById('filter-note').textContent = activeSkill ? `正在显示与“${activeSkill}”相关的经历和项目，再次点击标签可恢复。` : '选择一项能力，查看对应实践。'; }));
+      document.getElementById('copy-phone').addEventListener('click', async () => { try { await navigator.clipboard.writeText('18389327929'); showToast('电话号码已复制'); } catch { showToast('电话：183 8932 7929'); } });
+      document.getElementById('export-data').addEventListener('click', () => { const payload = { ...state, exportedAt: new Date().toISOString(), note: '张钦互动职业简历网页 v02 编辑数据' }; const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })); link.download = '张钦互动简历编辑数据_v02.json'; link.click(); URL.revokeObjectURL(link.href); showToast('编辑数据已导出'); });
+      document.getElementById('reset-data').addEventListener('click', () => { if (!window.confirm('确认恢复为初始简历内容？已编辑内容将从当前浏览器中清除。')) return; state = JSON.parse(JSON.stringify(defaults)); localStorage.removeItem(storageKey); applyState(); setEditMode(false); showToast('已恢复初始内容'); });
+      const revealObserver = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); } }), { threshold: .12 }); document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+      const countObserver = new IntersectionObserver(entries => entries.forEach(entry => { if (!entry.isIntersecting || entry.target.dataset.counted) return; entry.target.dataset.counted = 'true'; const end = Number(entry.target.dataset.counter); const suffix = entry.target.dataset.suffix || ''; const prefix = entry.target.dataset.prefix || ''; const start = performance.now(); const tick = now => { const progress = Math.min((now - start) / 900, 1); entry.target.textContent = prefix + Math.round(end * (1 - Math.pow(1 - progress, 3))).toLocaleString() + suffix; if (progress < 1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); }), { threshold: .75 }); document.querySelectorAll('[data-counter]').forEach(el => countObserver.observe(el));
+      const sections = document.querySelectorAll('[data-section], #contact'); const navs = document.querySelectorAll('.nav a'); const navObserver = new IntersectionObserver(entries => entries.forEach(entry => { if (!entry.isIntersecting) return; navs.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`)); }), { rootMargin: '-35% 0px -55% 0px' }); sections.forEach(section => navObserver.observe(section));
+      window.addEventListener('scroll', () => { const max = document.documentElement.scrollHeight - innerHeight; document.querySelector('.page-progress').style.width = `${max ? (scrollY / max) * 100 : 0}%`; }, { passive: true });
+    })();
+  </script>
+</body>
+</html>
